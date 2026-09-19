@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FocusList — Daily Task & Priority Manager</title>
+  <meta name="description" content="A warm, fast, accessible, client-side task and priority manager designed for pleasant daily productivity.">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- Ambient Decorative Background Doodles (Subtle whitespace accents) -->
+  <div class="ambient-doodles" aria-hidden="true">
+    <!-- Left Top Sparkle Star -->
+    <svg class="ambient-doodle doodle-left-top" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+      <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07 19.07 4.93"/>
+    </svg>
+    <!-- Left Mid Paperclip -->
+    <svg class="ambient-doodle doodle-left-mid" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l7.88-7.88"/>
+    </svg>
+    <!-- Left Bottom Leaf -->
+    <svg class="ambient-doodle doodle-left-bottom" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M11 20A7 7 0 0 1 4 13C4 8.5 8.5 4 13 4c5 0 7 2 7 7 0 4.5-4.5 9-9 9Z"/><path d="M4 13c5.5 0 9 3.5 9 7"/>
+    </svg>
+    <!-- Right Top Paper Airplane -->
+    <svg class="ambient-doodle doodle-right-top" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+      <path d="m3 3 3 9 7 2-7 2-3 9 18-11L3 3Z"/><path d="m6 12 7 2"/>
+    </svg>
+    <!-- Right Mid Coffee Cup -->
+    <svg class="ambient-doodle doodle-right-mid" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/>
+    </svg>
+    <!-- Right Bottom Sparkle -->
+    <svg class="ambient-doodle doodle-right-bottom" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="12" cy="12" r="2"/><path d="M12 3v3m0 12v3M3 12h3m12 0h3"/>
+    </svg>
+  </div>
+
+  <div class="focus-room-container">
+    <!-- Left Inner Wall (Sticky Board + Today's List) -->
+    <aside class="room-wall room-wall-left" aria-label="Notes and daily schedule">
+      <div class="wall-seam left-seam" aria-hidden="true"></div>
+      
+      <!-- Upper Section: Sticky Board -->
+      <section class="sticky-board-section" id="sticky-board" aria-label="Sticky Notes Board">
+        <div class="board-section-header">
+          <div class="board-header-title-group">
+            <span class="board-icon" aria-hidden="true">📌</span>
+            <h2 class="board-section-title">Sticky Board</h2>
+          </div>
+          <button type="button" id="toggle-add-sticky-btn" class="btn-board-action" aria-label="Add new sticky note">
+            + Note
+          </button>
+        </div>
+
+        <!-- Sticky Note Composer (Toggled on + Note) -->
+        <div id="sticky-composer" class="sticky-composer" hidden>
+          <label for="sticky-input" class="sr-only">Sticky note text</label>
+          <textarea
+            id="sticky-input"
+            class="sticky-input"
+            placeholder="Write a quick reminder or thought..."
+            rows="3"
+            maxlength="140"
+            aria-label="Sticky note text"
+          ></textarea>
+          <div class="sticky-composer-controls">
+            <div class="color-picker-group" role="radiogroup" aria-label="Sticky note color">
+              <button type="button" class="color-dot color-dot-yellow active" data-color="yellow" aria-label="Yellow color" aria-pressed="true"></button>
+              <button type="button" class="color-dot color-dot-coral" data-color="coral" aria-label="Coral color" aria-pressed="false"></button>
+              <button type="button" class="color-dot color-dot-mint" data-color="mint" aria-label="Mint color" aria-pressed="false"></button>
+              <button type="button" class="color-dot color-dot-lavender" data-color="lavender" aria-label="Lavender color" aria-pressed="false"></button>
+            </div>
+            <div class="composer-btn-group">
+              <button type="button" id="cancel-sticky-btn" class="btn btn-secondary btn-xs" aria-label="Cancel note creation">Cancel</button>
+              <button type="button" id="save-sticky-btn" class="btn btn-primary btn-xs" aria-label="Save sticky note">Post</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sticky Notes List -->
+        <div id="sticky-notes-list" class="sticky-notes-list" role="region" aria-label="Pinned sticky notes" aria-live="polite">
+          <!-- Dynamically populated sticky notes -->
+        </div>
+      </section>
+
+      <!-- Wall Divider Seam -->
+      <div class="wall-internal-divider" aria-hidden="true"></div>
+
+      <!-- Lower Section: Today's List -->
+      <section class="todays-list-section" id="todays-list-section" aria-label="Today's scheduled tasks">
+        <div class="board-section-header">
+          <div class="board-header-title-group">
+            <span class="board-icon" aria-hidden="true">☀</span>
+            <h2 class="board-section-title">Today's List</h2>
+          </div>
+          <span class="todays-badge" id="todays-count" aria-live="polite">0</span>
+        </div>
+
+        <div id="todays-tasks-container" class="todays-tasks-container" role="list" aria-label="Tasks due today" aria-live="polite">
+          <!-- Dynamically populated Today's List items -->
+        </div>
+      </section>
+    </aside>
+
+    <!-- Central Back Wall (FocusList Workspace) -->
+    <div class="app-layout room-back-wall">
+      <!-- Header -->
+      <header class="app-header" role="banner">
+        <div class="header-content">
+          <div class="brand-row">
+            <div class="brand-badge" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2"></path>
+                <path d="M12 20v2"></path>
+                <path d="m4.93 4.93 1.41 1.41"></path>
+                <path d="m17.66 17.66 1.41 1.41"></path>
+                <path d="M2 12h2"></path>
+                <path d="M20 12h2"></path>
+                <path d="m6.34 17.66-1.41 1.41"></path>
+                <path d="m19.07 4.93-1.41 1.41"></path>
+              </svg>
+            </div>
+            <h1 class="app-title">FocusList<span class="header-sparkle" aria-hidden="true">✦</span></h1>
+            <button type="button" id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Open navigation menu" aria-expanded="false">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="tagline-row">
+            <p class="app-tagline">What needs your attention today?</p>
+            <button
+              type="button"
+              id="how-to-use-btn"
+              class="how-to-use-btn"
+              aria-label="How to use FocusList"
+              title="How to use FocusList"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Workspace -->
+      <main class="app-main" id="main-content" role="main">
+        
+        <!-- Horizontal Metrics Strip -->
+        <section class="stats-strip" aria-label="Task statistics">
+          <div class="stat-item" id="stat-total-container" title="Total tasks in dataset">
+            <span class="stat-value" id="stat-total" aria-live="polite">0</span>
+            <span class="stat-label">Total</span>
+          </div>
+          <div class="stat-divider" aria-hidden="true"></div>
+          <div class="stat-item" id="stat-pending-container" title="Tasks remaining">
+            <span class="stat-value text-pending" id="stat-pending" aria-live="polite">0</span>
+            <span class="stat-label">Pending</span>
+          </div>
+          <div class="stat-divider" aria-hidden="true"></div>
+          <div class="stat-item" id="stat-completed-container" title="Tasks completed">
+            <span class="stat-value text-completed" id="stat-completed" aria-live="polite">0</span>
+            <span class="stat-label">Completed</span>
+          </div>
+        </section>
+
+        <!-- Task Creation Section -->
+        <section class="creation-section" aria-label="Create new task">
+          <form id="task-form" class="task-form" autocomplete="off" novalidate>
+            <div class="form-container-grid">
+              <!-- Top Row: Title Input -->
+              <div class="input-wrapper">
+                <label for="task-input" class="sr-only">New task title</label>
+                <input
+                  type="text"
+                  id="task-input"
+                  class="task-input"
+                  placeholder="What needs to be done?"
+                  maxlength="250"
+                  aria-label="New task title"
+                  required
+                />
+                <div id="form-error" class="input-error-msg" role="alert" aria-live="assertive" hidden></div>
+              </div>
+
+              <!-- Bottom Row: Priority, Due Date, Due Time, and Submit Button -->
+              <div class="form-controls-row">
+                <div class="form-control-item">
+                  <label for="task-priority-select" class="sr-only">Select task priority</label>
+                  <select id="task-priority-select" class="form-select priority-select" aria-label="Select task priority">
+                    <option value="MEDIUM">Medium Priority</option>
+                    <option value="HIGH">High Priority</option>
+                    <option value="LOW">Low Priority</option>
+                  </select>
+                </div>
+
+                <div class="form-control-item">
+                  <label for="task-due-date" class="sr-only">Due date</label>
+                  <input
+                    type="date"
+                    id="task-due-date"
+                    class="form-input date-input"
+                    aria-label="Task due date"
+                  />
+                </div>
+
+                <div class="form-control-item">
+                  <label for="task-due-time" class="sr-only">Due time</label>
+                  <input
+                    type="time"
+                    id="task-due-time"
+                    class="form-input time-input"
+                    aria-label="Task due time"
+                  />
+                </div>
+
+                <button type="submit" id="add-task-btn" class="btn btn-primary btn-add-task" aria-label="Add new task">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  <span>Add Task</span>
+                </button>
+              </div>
+            </div>
+          </form>
+        </section>
+
+        <!-- Search & Filters Section -->
+        <section class="controls-section" aria-label="Task search and filters">
+          <div class="controls-grid">
+            <!-- Search Input -->
+            <div class="search-box">
+              <span class="search-icon" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </span>
+              <label for="search-input" class="sr-only">Search tasks by title</label>
+              <input
+                type="search"
+                id="search-input"
+                class="search-input"
+                placeholder="Search tasks..."
+                aria-label="Search tasks by title"
+              />
+              <button type="button" id="clear-search-btn" class="clear-search-btn" aria-label="Clear search input" hidden>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Status Segmented Control -->
+            <div class="status-filters" role="group" aria-label="Filter tasks by status">
+              <button type="button" class="filter-tab active" data-status="ALL" aria-pressed="true">
+                All
+              </button>
+              <button type="button" class="filter-tab" data-status="ACTIVE" aria-pressed="false">
+                Active
+              </button>
+              <button type="button" class="filter-tab" data-status="COMPLETED" aria-pressed="false">
+                Completed
+              </button>
+            </div>
+
+            <!-- Priority Filter Dropdown -->
+            <div class="priority-filter-wrapper">
+              <label for="priority-filter-select" class="sr-only">Filter tasks by priority</label>
+              <select id="priority-filter-select" class="priority-filter-select" aria-label="Filter tasks by priority">
+                <option value="ALL">All Priorities</option>
+                <option value="HIGH">High Priority</option>
+                <option value="MEDIUM">Medium Priority</option>
+                <option value="LOW">Low Priority</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Active Filter Indicator Bar -->
+          <div id="filter-indicator" class="filter-indicator" hidden>
+            <span id="filter-indicator-text" class="filter-indicator-text"></span>
+            <button type="button" id="reset-all-filters-btn" class="reset-filter-link" aria-label="Clear all active filters">
+              Clear filters
+            </button>
+          </div>
+        </section>
+
+        <!-- Task List Container -->
+        <section class="task-list-section" aria-label="Task list">
+          <ul id="task-list" class="task-list" role="list" aria-live="polite">
+            <!-- Dynamically populated tasks or empty states -->
+          </ul>
+        </section>
+
+      </main>
+
+      <!-- Footer -->
+      <footer class="app-footer" role="contentinfo">
+        <p class="footer-text">FocusList &bull; Client-side task persistence &bull; <kbd>Enter</kbd> to add or save &bull; <kbd>Esc</kbd> to cancel</p>
+      </footer>
+    </div>
+
+    <!-- Right Inner Wall (Functional Kanban Board) -->
+    <aside class="room-wall room-wall-right" aria-label="Kanban Workflow Board">
+      <div class="wall-seam right-seam" aria-hidden="true"></div>
+      
+      <div class="kanban-board" id="kanban-board">
+        <div class="kanban-header">
+          <div class="kanban-title-group">
+            <span class="kanban-icon" aria-hidden="true">📋</span>
+            <h2 class="kanban-title">Kanban Flow</h2>
+          </div>
+        </div>
+
+        <!-- Kanban Columns Container -->
+        <div class="kanban-columns">
+          
+          <!-- Column 1: TODO -->
+          <div class="kanban-column" id="kanban-col-todo" data-column-status="todo" role="region" aria-label="Todo workflow column">
+            <div class="kanban-col-header">
+              <span class="col-status-dot dot-todo" aria-hidden="true"></span>
+              <h3 class="col-title">TODO</h3>
+              <span class="col-count" id="kanban-count-todo" aria-live="polite">0</span>
+            </div>
+            <div class="kanban-card-list" id="kanban-list-todo" data-drop-zone="todo" aria-label="Todo task cards">
+              <!-- Dynamically populated cards -->
+            </div>
+          </div>
+
+          <!-- Column 2: IN PROGRESS -->
+          <div class="kanban-column" id="kanban-col-inprogress" data-column-status="in-progress" role="region" aria-label="In Progress workflow column">
+            <div class="kanban-col-header">
+              <span class="col-status-dot dot-inprogress" aria-hidden="true"></span>
+              <h3 class="col-title">IN PROGRESS</h3>
+              <span class="col-count" id="kanban-count-inprogress" aria-live="polite">0</span>
+            </div>
+            <div class="kanban-card-list" id="kanban-list-inprogress" data-drop-zone="in-progress" aria-label="In Progress task cards">
+              <!-- Dynamically populated cards -->
+            </div>
+          </div>
+
+          <!-- Column 3: DONE -->
+          <div class="kanban-column" id="kanban-col-done" data-column-status="done" role="region" aria-label="Done workflow column">
+            <div class="kanban-col-header">
+              <span class="col-status-dot dot-done" aria-hidden="true"></span>
+              <h3 class="col-title">DONE</h3>
+              <span class="col-count" id="kanban-count-done" aria-live="polite">0</span>
+            </div>
+            <div class="kanban-card-list" id="kanban-list-done" data-drop-zone="done" aria-label="Done task cards">
+              <!-- Dynamically populated cards -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- How to Use Modal Overlay (Desktop ~80% / Mobile responsive) -->
+  <div id="guide-modal-overlay" class="modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="guide-modal-title">
+    <div class="modal-backdrop" id="guide-modal-backdrop"></div>
+    <div class="guide-modal-container" role="document">
+      <div class="guide-modal-header">
+        <div class="guide-modal-title-group">
+          <span class="guide-modal-icon" aria-hidden="true">✦</span>
+          <h2 id="guide-modal-title" class="guide-modal-title">How to use FocusList</h2>
+        </div>
+        <button type="button" id="close-guide-modal-btn" class="guide-modal-close-btn" aria-label="Close guide">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="guide-modal-body">
+        <!-- Introduction copy -->
+        <div class="guide-intro-card">
+          <p class="guide-intro-lead"><strong>FocusList is your little productivity room.</strong></p>
+          <p class="guide-intro-sub">Keep tasks in the center, reminders on your Sticky Board, and move work through the Kanban Flow. Everything stays saved in this browser.</p>
+        </div>
+
+        <!-- Required concise feature summaries -->
+        <div class="guide-sections-grid">
+          <div class="guide-card">
+            <div class="guide-card-icon guide-icon-coral">✍</div>
+            <div class="guide-card-content">
+              <h3 class="guide-card-title">Create Tasks</h3>
+              <p class="guide-card-text">Add tasks from the center with a title, priority level (High, Medium, Low), and optional due date and time.</p>
+            </div>
+          </div>
+
+          <div class="guide-card">
+            <div class="guide-card-icon guide-icon-amber">🔍</div>
+            <div class="guide-card-content">
+              <h3 class="guide-card-title">Search & Filter</h3>
+              <p class="guide-card-text">Quickly find tasks with live search, status tabs (All, Active, Completed), and priority filters.</p>
+            </div>
+          </div>
+
+          <div class="guide-card">
+            <div class="guide-card-icon guide-icon-yellow">📌</div>
+            <div class="guide-card-content">
+              <h3 class="guide-card-title">Sticky Board</h3>
+              <p class="guide-card-text">Keep quick thoughts on colored sticky notes. Drag and drop notes to reorder them anytime.</p>
+            </div>
+          </div>
+
+          <div class="guide-card">
+            <div class="guide-card-icon guide-icon-mint">☀</div>
+            <div class="guide-card-content">
+              <h3 class="guide-card-title">Today's List</h3>
+              <p class="guide-card-text">See what is due today at a glance. Click any item to jump straight to it in the central workspace.</p>
+            </div>
+          </div>
+
+          <div class="guide-card">
+            <div class="guide-card-icon guide-icon-lavender">⇄</div>
+            <div class="guide-card-content">
+              <h3 class="guide-card-title">Kanban Flow</h3>
+              <p class="guide-card-text">Move work across <strong>TODO → IN PROGRESS → DONE</strong> by dragging and dropping cards or using the selector.</p>
+            </div>
+          </div>
+
+          <div class="guide-card">
+            <div class="guide-card-icon guide-icon-coral">✎</div>
+            <div class="guide-card-content">
+              <h3 class="guide-card-title">Edit & Delete</h3>
+              <p class="guide-card-text">Click Edit to modify task titles or priorities, or delete tasks when plans change.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data & Demo Controls Section -->
+        <div class="guide-data-section">
+          <div class="guide-data-header">
+            <h3 class="guide-data-title">Data & Demo Controls</h3>
+            <p class="guide-data-note">
+              <span class="guide-info-badge">ℹ</span>
+              <strong>Your data is stored in this browser.</strong> Clearing this website's browser/site data or Local Storage can remove your saved tasks and notes.
+            </p>
+          </div>
+
+          <div class="guide-data-actions">
+            <div class="guide-data-action-card">
+              <div class="guide-action-info">
+                <span class="guide-action-name">Demo Data</span>
+                <span class="guide-action-desc">Load canonical sample tasks, sticky notes, and schedule examples.</span>
+              </div>
+              <button type="button" id="btn-load-demo-data" class="btn btn-secondary btn-sm" aria-label="Load demo data">
+                Enable Demo Data
+              </button>
+            </div>
+
+            <div class="guide-data-action-card destructive-card">
+              <div class="guide-action-info">
+                <span class="guide-action-name">Reset FocusList</span>
+                <span class="guide-action-desc">Clear all tasks, notes, and local storage data for a fresh start.</span>
+              </div>
+              <button type="button" id="btn-reset-app-data" class="btn btn-danger btn-sm" aria-label="Reset FocusList">
+                Reset FocusList
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="guide-modal-footer">
+        <button type="button" id="btn-close-guide-footer" class="btn btn-secondary btn-md">
+          Close Guide
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Dialog Modal Overlay -->
+  <div id="confirm-modal-overlay" class="modal-overlay confirm-modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+    <div class="modal-backdrop" id="confirm-modal-backdrop"></div>
+    <div class="confirm-modal-container" role="document">
+      <div class="confirm-modal-icon-badge" id="confirm-modal-badge">⚠</div>
+      <h3 id="confirm-modal-title" class="confirm-modal-title">Confirm Action</h3>
+      <p id="confirm-modal-message" class="confirm-modal-message">Are you sure you want to proceed?</p>
+      <div class="confirm-modal-actions">
+        <button type="button" id="confirm-modal-cancel-btn" class="btn btn-secondary btn-sm">Cancel</button>
+        <button type="button" id="confirm-modal-action-btn" class="btn btn-primary btn-sm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Navigation Drawer Overlay -->
+  <div id="mobile-drawer-overlay" class="modal-overlay mobile-drawer-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="mobile-drawer-title">
+    <div class="modal-backdrop" id="mobile-drawer-backdrop"></div>
+    <div class="mobile-drawer-container">
+      <div class="mobile-drawer-header">
+        <div class="brand-row">
+          <div class="brand-badge" aria-hidden="true">✦</div>
+          <h2 id="mobile-drawer-title" class="app-title" style="font-size: 1.15rem;">Focus Room</h2>
+        </div>
+        <button type="button" id="close-mobile-drawer-btn" class="guide-modal-close-btn" aria-label="Close menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <nav class="mobile-drawer-nav">
+        <button type="button" class="drawer-nav-item active" data-drawer-target="tasks">
+          <span class="drawer-nav-icon">📋</span>
+          <span class="drawer-nav-text">Tasks / Main Todo</span>
+        </button>
+        <button type="button" class="drawer-nav-item" data-drawer-target="sticky">
+          <span class="drawer-nav-icon">📌</span>
+          <span class="drawer-nav-text">Sticky Board</span>
+        </button>
+        <button type="button" class="drawer-nav-item" data-drawer-target="today">
+          <span class="drawer-nav-icon">☀</span>
+          <span class="drawer-nav-text">Today's List</span>
+        </button>
+        <button type="button" class="drawer-nav-item" data-drawer-target="kanban">
+          <span class="drawer-nav-icon">⇄</span>
+          <span class="drawer-nav-text">Kanban Flow</span>
+        </button>
+        <div class="drawer-divider"></div>
+        <button type="button" class="drawer-nav-item" id="drawer-how-to-use-btn">
+          <span class="drawer-nav-icon">ⓘ</span>
+          <span class="drawer-nav-text">How to Use</span>
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Main Application Script -->
+  <script src="js/app.js"></script>
+</body>
+</html>

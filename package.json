@@ -1,0 +1,29 @@
+{
+  "name": "focuslist",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A calm, fast, accessible, client-side task and priority manager built for the FAIE challenge.",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit && esbuild src/main.ts --bundle --outfile=js/app.js --format=iife --target=es2022",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/ js/app.js --ext .ts,.js"
+  },
+  "keywords": [
+    "todo",
+    "task-manager",
+    "accessibility",
+    "productivity",
+    "focuslist",
+    "faie"
+  ],
+  "author": "Frontend Arena Participant",
+  "license": "MIT",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "esbuild": "^0.20.2",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.5"
+  }
+}
